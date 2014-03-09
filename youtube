@@ -1,0 +1,45 @@
+#!/bin/bash
+pae="--play-and-exit"
+repeats=("-R" "--repeat" "-L" "--loop")
+for arg in "$@"
+do
+    for repeat in $repeats
+    do
+	if [ "$arg" == "$repeat" ]
+	then
+	    pae=""
+	    break
+	fi
+    done
+    if [ "$pae" == "" ]
+    then
+	break
+    fi
+done
+
+link=`xclip -selection clipboard -out`
+link=`echo $link | grep youtube.com`
+if [ -z "$link" ]
+then
+    echo "A youtube link was not found."
+    exit
+fi
+
+file=`youtube-dl --get-filename -o "%(id)s" $link`
+file="/var/tmp/"$file
+if [ -e $file ]
+then
+    cvlc $@ $pae --quiet $file
+    exit
+fi
+
+youtube-dl --quiet --no-part --max-quality mp4 -o $file $link &
+while [ ! -e $file ]
+do
+    sleep 0.1s
+done
+
+sleep 0.5s
+
+cvlc $@ $pae --quiet $file
+
