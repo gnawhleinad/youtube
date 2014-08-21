@@ -5,7 +5,7 @@ Play a youtube video from vlc.
 Copy a youtube link and then run:
 
 ```bash
-youtube
+$ youtube
 ```
 
 ### Pre-requisites
