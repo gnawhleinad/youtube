@@ -1,45 +1,44 @@
 #!/bin/bash
+
 pae="--play-and-exit"
 repeats=("-R" "--repeat" "-L" "--loop")
-for arg in "$@"
-do
-    for repeat in $repeats
-    do
-	if [ "$arg" == "$repeat" ]
-	then
-	    pae=""
-	    break
-	fi
-    done
-    if [ "$pae" == "" ]
-    then
-	break
-    fi
+yopts=""
+for arg in "$@"; do
+        if [ "$arg" == "--audio" ]; then
+                yopts="--extract-audio --audio-quality 0"
+                continue
+        fi
+
+        for repeat in $repeats; do
+                if [ "$arg" == "$repeat" ]; then
+                        pae=""
+                        break
+                fi
+        done
 done
 
-link=`xclip -selection clipboard -out`
-link=`echo $link | grep youtube.com`
-if [ -z "$link" ]
-then
-    echo "A youtube link was not found."
-    exit
+OS=$(([[ -f /etc/lsb-release ]] && grep -q -i "Ubuntu" /etc/lsb-release) \
+        && echo "ubuntu" || echo "os x")
+VLC="cvlc"
+if [[ "$OS" == "os x" ]]; then
+        VLC="${HOME}/Applications/VLC.app/Contents/MacOS/VLC"
+        link=`pbpaste`
+else
+        link=`xclip -selection clipboard -out`
 fi
 
-file=`youtube-dl --get-filename -o "%(id)s" $link`
+link=`echo "$link" | grep youtube.com`
+if [ -z "$link" ]; then
+        echo "A youtube link was not found."
+        exit
+fi
+
+file=`youtube-dl $yopts --get-filename --output "%(id)s.%(ext)s" "$link"`
 file="/var/tmp/"$file
-if [ -e $file ]
-then
-    cvlc $@ $pae --quiet $file
-    exit
+if [ -e $file ]; then
+        $VLC $@ $pae --quiet $file &
+        exit
 fi
 
-youtube-dl --quiet --no-part --max-quality mp4 -o $file $link &
-while [ ! -e $file ]
-do
-    sleep 0.1s
-done
-
-sleep 0.5s
-
-cvlc $@ $pae --quiet $file
-
+youtube-dl $yopts --no-part --output "$file" \
+        --exec "$VLC $@ $pae --quiet {} &" "$link"
