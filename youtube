@@ -27,7 +27,7 @@ else
         link=`xclip -selection clipboard -out`
 fi
 
-link=`echo "$link" | grep youtube.com`
+link=`echo "$link" | grep "youtube.com\|youtu.be"`
 if [ -z "$link" ]; then
         echo "A youtube link was not found."
         exit
