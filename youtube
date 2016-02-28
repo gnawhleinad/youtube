@@ -1,30 +1,32 @@
 #!/bin/bash
 
-pae="--play-and-exit"
-repeats=("-R" "--repeat" "-L" "--loop")
-yopts=""
-for arg in "$@"; do
-        if [ "$arg" == "--audio" ]; then
-                yopts="--extract-audio --audio-quality 0"
-                continue
-        fi
+VLC="cvlc"
 
-        for repeat in $repeats; do
-                if [ "$arg" == "$repeat" ]; then
-                        pae=""
-                        break
-                fi
-        done
+vlc_opts="--play-and-exit"
+yt_opts=""
+link=""
+for arg in "$@"; do
+        case $arg in
+                --audio)
+                        yt_opts="--extract-audio --audio-quality 0"
+                        ;;
+                --loop)
+                        vlc_opts="--loop"
+                        ;;
+                *)
+                        link=`echo $arg | grep "youtube.com\|youtu.be"`
+                        ;;
+        esac
+        shift
 done
 
-OS=$(([[ -f /etc/lsb-release ]] && grep -q -i "Ubuntu" /etc/lsb-release) \
+os=$(([[ -f /etc/lsb-release ]] && grep -q -i "Ubuntu" /etc/lsb-release) \
         && echo "ubuntu" || echo "os x")
-VLC="cvlc"
-if [[ "$OS" == "os x" ]]; then
+if [[ "$os" == "os x" ]]; then
         VLC="${HOME}/Applications/VLC.app/Contents/MacOS/VLC"
-        link=`pbpaste`
+        [[ -z $link ]] && link=`pbpaste`
 else
-        link=`xclip -selection clipboard -out`
+        [[ -z $link ]] && link=`xclip -selection clipboard -out`
 fi
 
 link=`echo "$link" | grep "youtube.com\|youtu.be"`
@@ -33,12 +35,12 @@ if [ -z "$link" ]; then
         exit
 fi
 
-file=`youtube-dl $yopts --get-filename --output "%(id)s.%(ext)s" "$link"`
+file=`youtube-dl $yt_opts --get-filename --output "%(id)s.%(ext)s" "$link"`
 file="/var/tmp/"$file
 if [ -e $file ]; then
-        $VLC $@ $pae --quiet $file &
+        $VLC $vlc_opts --quiet $file &
         exit
 fi
 
-youtube-dl $yopts --no-part --output "$file" \
-        --exec "$VLC $@ $pae --quiet {} &" "$link"
+youtube-dl $yt_opts --no-part --output "$file" \
+        --exec "$VLC $vlc_opts --quiet {} &" "$link"
