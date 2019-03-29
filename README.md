@@ -1,14 +1,22 @@
-Play a youtube video from vlc.
+play a youtube video from vlc via [youtube-dl].
 
-### Instructions
+[youtube-dl]: https://ytdl-org.github.io/youtube-dl/
 
-Copy a youtube link and then run:
+### installation
 
 ```bash
-$ youtube
+$ git clone https://github.com/gnawhleinad/youtube.git
+$ cd youtube
+$ brew bundle
+$ ln -s "$(pwd)/youtube" /usr/local/bin/youtube
 ```
 
-### Pre-requisites
-- [youtube-dl](http://rg3.github.io/youtube-dl/download.html)
-- [vlc](http://www.videolan.org/vlc/index.html)
-- [xclip](http://sourceforge.net/projects/xclip/)
+### examples
+
+```bash
+$ youtube https://youtu.be/U4n5OEwBlMw
+```
+
+```bash
+$ youtube --audio --loop https://youtu.be/wbewYT57_nc
+```
