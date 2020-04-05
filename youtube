@@ -37,7 +37,10 @@ fi
 
 file=`youtube-dl $yt_opts --get-filename --output "%(id)s.%(ext)s" "$link"`
 file="/var/tmp/"$file
-if [ -e $file ]; then
+if [ -e "${file%.*}."* ]; then
+        shopt -s extglob
+        file="${file%.*}."*
+        shopt -u extglob
         $VLC $vlc_opts --quiet $file &
         exit
 fi
