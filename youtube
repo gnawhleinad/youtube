@@ -4,10 +4,20 @@ VLC="cvlc"
 
 vlc_opts="--play-and-exit"
 yt_opts=""
+yt_post_opts=""
 link=""
+force=false
 for arg in "$@"; do
   case $arg in
     --audio)  yt_opts="--extract-audio --audio-quality 0" ;;
+    --time)
+      offset=$(echo $2 | cut -d "," -f 1)
+      duration=$(echo $2 | cut -d "," -f 2)
+      ((duration++))
+      shift
+      shift
+      ;;
+    --force) force=true ;;
     --loop)   vlc_opts="${vlc_opts} --loop" ;;
     --random) vlc_opts="${vlc_opts} --random" ;;
     *)        link=`echo $arg | grep "youtube.com\|youtu.be"` ;;
@@ -48,7 +58,7 @@ if [[ $link =~ list= ]]; then
 else
   file=`youtube-dl $yt_opts --get-filename --output "%(id)s.%(ext)s" "$link"`
   file="/var/tmp/"$file
-  if [ -e "${file%.*}."* ]; then
+  if [[ $force != true ]] && [[ -e "${file%.*}."* ]]; then
     shopt -s extglob
     file="${file%.*}."*
     shopt -u extglob
@@ -56,6 +66,12 @@ else
     exit
   fi
 
-  youtube-dl $yt_opts --no-part --output "$file" \
-    --exec "$VLC $vlc_opts --quiet {} &" "$link"
+  if [[ -z $offset ]]; then
+    youtube-dl $yt_opts --no-part --output "$file" \
+      --exec "$VLC $vlc_opts --quiet {} &" "$link"
+  else
+    youtube-dl $yt_opts --no-part --output "$file" \
+      --postprocessor-args "-ss $offset -t $duration" \
+      --exec "$VLC $vlc_opts --quiet {} &" "$link"
+  fi
 fi
