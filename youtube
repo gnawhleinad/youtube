@@ -6,7 +6,6 @@ vlc_opts="--play-and-exit"
 yt_opts=""
 yt_post_opts=""
 link=""
-force=false
 for arg in "$@"; do
   case $arg in
     --audio)  yt_opts="--extract-audio --audio-quality 0" ;;
@@ -17,7 +16,6 @@ for arg in "$@"; do
       shift
       shift
       ;;
-    --force) force=true ;;
     --loop)   vlc_opts="${vlc_opts} --loop" ;;
     --random) vlc_opts="${vlc_opts} --random" ;;
     *)        link=`echo $arg | grep "youtube.com\|youtu.be"` ;;
@@ -40,37 +38,27 @@ if [ -z "$link" ]; then
   exit
 fi
 
+out=$(mktemp -d)
 if [[ $link =~ list= ]]; then
   yt_opts="${yt_opts} --ignore-errors"
 
   directory=`youtube-dl --playlist-items 1 --get-filename \
     --output "%(playlist_id)s" "$link"`
-  directory="/var/tmp/"$directory
-  if [ -d "${directory}" ] && [ "$(ls -A ${directory})" ]; then
-    $VLC $vlc_opts --quiet $directory/* &
-    exit
-  fi
+  out="${out}/${directory}"
 
-  mkdir -p $directory
-  youtube-dl $yt_opts --no-part --output "${directory}/%(id)s.%(ext)s" \
+  mkdir -p ${out}
+  youtube-dl $yt_opts --no-part --output "${out}/%(id)s.%(ext)s" \
     "$link" && \
-      $VLC $vlc_opts --quiet $directory/* &
+      $VLC $vlc_opts --quiet $out/* &
 else
   file=`youtube-dl $yt_opts --get-filename --output "%(id)s.%(ext)s" "$link"`
-  file="/var/tmp/"$file
-  if [[ $force != true ]] && [[ -e "${file%.*}."* ]]; then
-    shopt -s extglob
-    file="${file%.*}."*
-    shopt -u extglob
-    $VLC $vlc_opts --quiet $file &
-    exit
-  fi
+  out="${out}/${file}"
 
   if [[ -z $offset ]]; then
-    youtube-dl $yt_opts --no-part --output "$file" \
+    youtube-dl $yt_opts --no-part --output "$out" \
       --exec "$VLC $vlc_opts --quiet {} &" "$link"
   else
-    youtube-dl $yt_opts --no-part --output "$file" \
+    youtube-dl $yt_opts --no-part --output "$out" \
       --postprocessor-args "-ss $offset -t $duration" \
       --exec "$VLC $vlc_opts --quiet {} &" "$link"
   fi
