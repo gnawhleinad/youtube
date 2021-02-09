@@ -6,8 +6,16 @@ vlc_opts="--play-and-exit"
 yt_opts=""
 yt_post_opts=""
 link=""
+listen=true
+out=$(mktemp -d)
 for arg in "$@"; do
   case $arg in
+    --save)
+      out=$2
+      listen=false
+      shift
+      shift
+      ;;
     --audio)  yt_opts="--extract-audio --audio-quality 0" ;;
     --time)
       offset=$(echo $2 | cut -d "," -f 1)
@@ -36,7 +44,11 @@ if [ -z "$link" ]; then
   exit
 fi
 
-out=$(mktemp -d)
+if [[ $listen == true ]]; then
+  listen="${VLC} $vlc_opts --quiet"
+else
+  listen="echo"
+fi
 if [[ $link =~ list= ]]; then
   yt_opts="${yt_opts} --ignore-errors"
 
@@ -47,17 +59,17 @@ if [[ $link =~ list= ]]; then
   mkdir -p ${out}
   youtube-dl $yt_opts --no-part --output "${out}/%(id)s.%(ext)s" \
     "$link" && \
-      $VLC $vlc_opts --quiet $out/* &
+      ${listen} $out/* &
 else
   file=`youtube-dl $yt_opts --get-filename --output "%(id)s.%(ext)s" "$link"`
   out="${out}/${file}"
 
   if [[ -z $offset ]]; then
     youtube-dl $yt_opts --no-part --output "$out" \
-      --exec "$VLC $vlc_opts --quiet {} &" "$link"
+      --exec "${listen} {} &" "$link"
   else
     youtube-dl $yt_opts --no-part --output "$out" \
       --postprocessor-args "-ss $offset -t $duration" \
-      --exec "$VLC $vlc_opts --quiet {} &" "$link"
+      --exec "${listen} --quiet {} &" "$link"
   fi
 fi
