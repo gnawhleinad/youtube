@@ -1,6 +1,7 @@
 #!/bin/bash
 
 VLC="cvlc"
+YOUTUBEDL="yt-dlp"
 
 vlc_opts="--play-and-exit"
 yt_opts=""
@@ -52,23 +53,23 @@ fi
 if [[ $link =~ list= ]]; then
   yt_opts="${yt_opts} --ignore-errors"
 
-  directory=`youtube-dl --playlist-items 1 --get-filename \
+  directory=`${YOUTUBEDL} --playlist-items 1 --get-filename \
     --output "%(playlist_id)s" "$link"`
   out="${out}/${directory}"
 
   mkdir -p ${out}
-  youtube-dl $yt_opts --no-part --output "${out}/%(id)s.%(ext)s" \
+  ${YOUTUBEDL} $yt_opts --no-part --output "${out}/%(id)s.%(ext)s" \
     "$link" && \
       ${listen} $out/* &
 else
-  file=`youtube-dl $yt_opts --get-filename --output "%(id)s.%(ext)s" "$link"`
+  file=`${YOUTUBEDL} $yt_opts --get-filename --output "%(id)s.%(ext)s" "$link"`
   out="${out}/${file}"
 
   if [[ -z $offset ]]; then
-    youtube-dl $yt_opts --no-part --output "$out" \
+    ${YOUTUBEDL} $yt_opts --no-part --output "$out" \
       --exec "${listen} {} &" "$link"
   else
-    youtube-dl $yt_opts --no-part --output "$out" \
+    ${YOUTUBEDL} $yt_opts --no-part --output "$out" \
       --postprocessor-args "-ss $offset -t $duration" \
       --exec "${listen} --quiet {} &" "$link"
   fi

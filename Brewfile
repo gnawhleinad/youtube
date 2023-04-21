@@ -1,2 +1,3 @@
-brew "youtube-dl"
+brew "ffmpeg"
+brew "yt-dlp"
 cask "vlc"
