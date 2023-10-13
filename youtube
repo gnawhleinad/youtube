@@ -13,6 +13,7 @@ for arg in "$@"; do
   case $arg in
     --save)
       out=$2
+      [[ -z $out ]] && out="."
       listen=false
       shift
       shift
@@ -66,10 +67,10 @@ else
   out="${out}/${file}"
 
   if [[ -z $offset ]]; then
-    ${YOUTUBEDL} $yt_opts --no-part --output "$out" \
+    ${YOUTUBEDL} $yt_opts --output "$out" \
       --exec "${listen} {} &" "$link"
   else
-    ${YOUTUBEDL} $yt_opts --no-part --output "$out" \
+    ${YOUTUBEDL} $yt_opts --output "$out" \
       --postprocessor-args "-ss $offset -t $duration" \
       --exec "${listen} --quiet {} &" "$link"
   fi
